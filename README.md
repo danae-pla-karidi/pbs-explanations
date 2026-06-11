@@ -8,9 +8,7 @@ compact subgraph, formalized as a unified **anchor–terminal** bi-objective
 problem (comprehensibility vs. relevance) over four scenarios: user-centric,
 item-centric, user-group, item-group.
 
-This is a **code-only** repository. No experimental results (tables, figures,
-CSVs, logs) are committed; everything under `results/` is regenerated from the
-code and a fixed seed. Input data is not redistributed — see [DATA.md](DATA.md).
+This is a **code-only** repository. Input data is not redistributed — see [DATA.md](DATA.md).
 
 ## What's new relative to the ICDE 2025 version [1]
 
@@ -24,7 +22,7 @@ code and a fixed seed. Input data is not redistributed — see [DATA.md](DATA.md
   Popular-Item Gap (`metrics/`).
 - **Paired significance testing** — Wilcoxon signed-rank with Holm correction
   (`metrics/significance.py`).
-- **Second dataset** — LastFM-1M, user-side scenarios only (see below).
+- **Second dataset** — LastFM-1M, user-centric scenarios only (see below).
 - **Two added recommenders** — PLM and PLMR, alongside PGPR and CAFE.
 - **λ-ablation runner** for the path-aware reweighting (`runners/run_lambda_ablation.py`).
 
