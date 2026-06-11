@@ -1,0 +1,34 @@
+# Byte-compiled
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Input data — download/build per DATA.md (KGs and recommender outputs are large)
+data/
+
+# Result artifacts — fully regenerable from code + seed (see scripts/run_all_*.sh).
+# Nothing under results/ is committed.
+results/
+
+# Caches written during runs
+**/_centrality_cache/
+**/_dterm_cache/
+**/_lambda_ablation/
+*.pkl
+
+# Logs
+logs/
+*.log
+
+# Toy sample CSVs written by tests/smoke_uid_translation.py
+samples/toy_users.csv
+samples/toylfm_users.csv

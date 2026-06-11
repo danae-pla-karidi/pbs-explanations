@@ -1,0 +1,12 @@
+networkx>=3.0
+numpy>=1.24,<2
+pandas>=2.0
+scipy>=1.10
+# pcst_fast: do NOT install via `pip install pcst_fast`.  The 1.0.10
+# release on PyPI has a Python-binding bug that corrupts the result
+# arrays.  Instead, run `bash scripts/install_pcst_fast.sh` once; that
+# script clones the master branch, applies a one-line C++ binding fix,
+# and installs the patched build.  See `algorithms/pcst_fast_compat.py`
+# for the import-time self-check that detects an unpatched install.
+matplotlib>=3.6
+pyarrow>=12.0
