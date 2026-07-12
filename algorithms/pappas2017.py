@@ -1,5 +1,5 @@
 """
-Pappas et al. (ESWC 2017) baseline.
+Pappas et al. (ESWC 2017) CentPrune baseline.
 
 Reference:
     A. Pappas, G. Troullinou, G. Roussakis, H. Kondylakis, D. Plexousakis,
