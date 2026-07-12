@@ -1,4 +1,4 @@
-# Path-Based Summary Explanations for Graph Recommenders
+# Summary Explanations for Graph-Based Recommenders
 
 Experimental pipeline for the **TKDE journal extension** of our ICDE 2025
 paper *"Path-Based Summary Explanations for Graph Recommenders"* [1].
@@ -24,7 +24,7 @@ This is a **code-only** repository. Input data is not redistributed — see [DAT
   (`metrics/significance.py`).
 - **Second dataset** — LastFM-1M, user-centric scenarios only (see below).
 - **Two added recommenders** — PLM and PLMR, alongside PGPR and CAFE.
-- **λ-ablation runner** for the path-aware reweighting (`runners/run_lambda_ablation.py`).
+- **λ-, γ-, β1/β2 ablation runners**.
 
 ## Algorithms and recommenders
 
