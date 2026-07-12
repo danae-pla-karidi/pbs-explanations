@@ -15,7 +15,7 @@ This is a **code-only** repository. Input data is not redistributed — see [DAT
 - **WPCST** — Weighted Path-Aware Prize-Collecting Steiner Tree with adaptive,
   centrality-scaled prizes, under three centrality choices: degree, PageRank,
   approximate betweenness (`algorithms/wpcst.py`, `centralities/`).
-- **Five structural baselines** — NaiveUnion, Pappas2017, MST, FACES, SuperNode
+- **Five structural baselines** — NaiveUnion, CentPrune, MST, FACES, SuperNode
   (`algorithms/`), run at a matched node budget against WPCST(degree).
 - **Two new metrics** — faithfulness and evidence density — plus **two fairness
   diagnostics**: the Comprehensibility Gap (summary size vs. group) and the
