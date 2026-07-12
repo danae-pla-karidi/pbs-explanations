@@ -16,30 +16,25 @@ This is a **code-only** repository. Input data is not redistributed — see [DAT
   centrality-scaled prizes, under three centrality choices: degree, PageRank,
   approximate betweenness (`algorithms/wpcst.py`, `centralities/`).
 - **Five structural baselines** — NaiveUnion, CentPrune, MST, FACES, SuperNode
-  (`algorithms/`), run at a matched node budget against WPCST(degree).
-- **Two new metrics** — faithfulness and evidence density — plus **two fairness
-  diagnostics**: the Comprehensibility Gap (summary size vs. group) and the
-  Popular-Item Gap (`metrics/`).
+  (`algorithms/`), run at a matched node budget against WPCST(degree). CentPrune (Pappas et al., ESWC 2017) is named pappas2017 in the code.
+- **Two new metrics** — faithfulness and evidence density (relevance per retained edge), plus two fairness diagnostics: the Comprehensibility Gap (CG) and the Popular-Item Gap (PIG), reported with the amplification ratio of PIG against the recommender gap (metrics/).
 - **Paired significance testing** — Wilcoxon signed-rank with Holm correction
   (`metrics/significance.py`).
-- **Second dataset** — LastFM-1M, user-centric scenarios only (see below).
+- **Second dataset** — LastFM-1M, user-centric and user-group scenarios with PGPR and CAFE (see below).
 - **Two added recommenders** — PLM and PLMR, alongside PGPR and CAFE.
-- **λ-, γ-, β1/β2 ablation runners**.
+- **Ablation runners** - the path-aware parameter lambda (runners/run_lambda_ablation.py) and the recency weighting over (beta1, beta2) settings (runners/generate_ablation_kgs.py, runners/run_beta_ablation.py). The WPCST centrality variants (degree, PageRank, approximate betweenness) run as a phase of the main sweeps.
 
 ## Algorithms and recommenders
 
-Ten summarizers in total: ST, PCST, three WPCST variants
-(degree / PageRank / approximate betweenness), and the five structural
-baselines. Each is applied on top of four path-based recommenders on ML1M
+Ten summarizers in total: ST, PCST, three WPCST variants (degree, PageRank, approximate betweenness), and the five structural baselines (NaiveUnion, CentPrune, MST, FACES, SuperNode). Each is applied on top of four path-based recommenders on ML1M
 (**PGPR, CAFE, PLM, PLMR**) and two on LFM1M (**PGPR, CAFE**).
 
 ### LFM1M scope
 
-LFM1M is a cross-dataset replication on the user side. Only PGPR and CAFE are
+LFM1M is a cross-dataset replication on the user-centric and user-group scenarios. Only PGPR and CAFE are
 trained on it, and item-side path files are unavailable, so the item-centric
 and item-group scenarios are skipped on LFM1M. Approximate betweenness is also
-skipped on LFM1M (~1 CPU-day per pass at the ML1M sampling rate). The dataset's
-declared baselines and scenarios are encoded in `config/settings.py`.
+skipped on LFM1M (~1 CPU-day per pass at the ML1M sampling rate). The baselines and scenarios declared for each dataset are encoded in config/settings.py.
 
 ## Layout
 
@@ -47,7 +42,7 @@ declared baselines and scenarios are encoded in `config/settings.py`.
 .
 ├── config/        # paths, hyperparameters, seeds, per-dataset baseline/scenario lists
 ├── sampling/      # seeded user/item sampling
-├── algorithms/    # ST, PCST, WPCST + NaiveUnion, Pappas2017, MST, FACES, SuperNode
+├── algorithms/    # ST, PCST, WPCST + NaiveUnion, CentPrune (pappas2017.py), MST, FACES, SuperNode
 ├── centralities/  # degree, PageRank, approximate betweenness
 ├── runners/       # one runner per scenario, plus the λ-ablation runner
 ├── metrics/       # per-anchor metrics, aggregation, paired Wilcoxon significance
@@ -64,8 +59,8 @@ declared baselines and scenarios are encoded in `config/settings.py`.
 ## Quickstart
 
 ```bash
-git clone https://github.com/danae-pla-karidi/path-based-summary-explanations.git
-cd path-based-summary-explanations
+git clone https://github.com/danae-pla-karidi/pbs-explanations.git
+cd pbs-explanations
 
 # 1. Python dependencies
 pip install -r requirements.txt
@@ -118,8 +113,7 @@ python -m runners.run_lambda_ablation --dataset ml1m --baseline pgpr \
     --scenario user_centric --algorithm wpcst --centrality degree
 ```
 
-Sweeps the path-aware reweighting strength λ of Eq. (2) for ST and WPCST,
-scoring outputs with the same metric functions as the main pipeline.
+Sweeps the path-aware reweighting strength lambda of Eq. (2) over {0.01, 1, 100} for ST and WPCST(degree), on the user-centric scenario, scoring outputs with the same metric functions as the main pipeline. The main runs fix lambda = 1.
 
 ## Outputs
 
@@ -141,12 +135,12 @@ Defaults in `config/settings.py`:
 |---|---|---|
 | `SEED` | 42 | sampling and all randomized steps |
 | `TOP_K` | 10 | top-K items per user/group |
-| `LAMBDA` | 1.0 | path-aware edge boost, Eq. (2) |
+| `LAMBDA` | 1.0 | path-aware edge boost, Eq. (2), applied by ST, PCST, and WPCST |
 | `GAMMA` | 0.1 | WPCST non-terminal/terminal prize ratio |
 | `BETWEENNESS_K_SOURCES` | 1000 | sampled sources for approximate betweenness |
 | `NUM_WORKERS` | 6 | per-scenario parallelism |
 
-`gamma = 0.1` follows the pilot sensitivity sweep reported in the paper.
+`gamma = 0.1` follows the gamma ablation over {0.1, 0.3, 0.5} reported in the paper. The main runs use edge weights with beta1 = 1 and beta2 = 0 in Eq. (1), i.e. rating only, no recency term. The recency ablation regenerates the KGs under other (beta1, beta2) settings.
 
 ## Compute notes
 
@@ -173,8 +167,7 @@ Defaults in `config/settings.py`:
 }
 ```
 
-The TKDE journal version is under review; the citation will be updated on
-acceptance.
+The extended journal version, "Summary Explanations for Graph-Based Recommenders", is under submission to IEEE TKDE. The citation will be updated on acceptance.
 
 ## License
 
