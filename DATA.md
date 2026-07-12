@@ -61,7 +61,7 @@ data/lfm1m/
 ├── pgpr_recommendations_lmfm.jsonl
 ├── cafe_recommendations_lmfm.jsonl
 └── user_uid_map.tsv          # rec-id ↔ graph-id mapping (see below)
-                              # no item_paths files: LFM1M is user-side only
+                              # no item_paths files: LFM1M runs the user-centric and user-group scenarios only
 ```
 
 ### LFM1M user-ID mapping
