@@ -1,6 +1,6 @@
 # Summary Explanations for Graph-Based Recommenders
 
-Experimental pipeline for the **ACM TORS journal extension** of our ICDE 2025
+Experimental pipeline for the **ACM Transactions on Recommender Systems** of our ICDE 2025
 paper *"Path-Based Summary Explanations for Graph Recommenders"* [1].
 
 The pipeline aggregates per-recommendation explanation paths into a single
@@ -167,7 +167,7 @@ Defaults in `config/settings.py`:
 }
 ```
 
-The extended journal version, "Summary Explanations for Graph-Based Recommenders", is under submission to ACM TORS. The citation will be updated on acceptance.
+The extended journal version, "Summary Explanations for Graph-Based Recommenders", is under submission to ACM Transactions on Recommender Systems. The citation will be updated on acceptance.
 
 ## License
 
