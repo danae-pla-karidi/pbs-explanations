@@ -1,24 +1,3 @@
-"""
-WPCST D_term fallback frequency per (dataset, scenario, recommender).
-
-Reads the existing WPCST result files, no re-run needed:
-    results/<dataset>/<scenario>/<dataset>_<scenario>_<rec>_wpcst_cent_<centrality>.jsonl
-
-Each row stores metadata.alpha and metadata.d_term (rounded to 4 decimals).
-alpha = 1 + D_term / W_avg, and the fallback sets D_term = W_avg, so an
-anchor is a fallback anchor iff alpha == 2 (tolerance 5e-5 for rounding).
-For non-fallback anchors, r = alpha - 1 = D_term / W_avg is reported
-(median and IQR) to show how far the adaptive prize is from alpha = 2.
-
-D_term is cached per anchor and shared across centrality variants, so the
-fallback flags do not depend on the centrality. The script checks this
-and warns on any mismatch.
-
-Usage (from the package root, the folder that contains results/):
-    python -m scripts.fallback_table
-    python -m scripts.fallback_table --centrality pagerank --out fallback.tex
-"""
-
 from __future__ import annotations
 
 import argparse
