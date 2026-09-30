@@ -1,50 +1,3 @@
-"""
-FACES-style diversity-aware summarization baseline.
-
-Reference:
-    K. Gunaratna, K. Thirunarayan, A. Sheth,
-    "FACES: Diversity-aware entity summarization using incremental
-     hierarchical conceptual clustering",
-    in AAAI 2015, pp. 116-122.
-
-Original FACES summarises a single entity by selecting K facts (= edges
-adjacent to the entity) that maximise diversity, where diversity is
-measured by clustering predicates and picking one fact per cluster.
-
-Adaptation to multi-anchor explanation summaries
-------------------------------------------------
-Our problem is "summarise a subgraph induced by top-K paths around an
-anchor", which generalises FACES' "summarise the facts around one entity".
-We adapt by:
-
-  1. Restrict candidates to the NaiveUnion node set (the explanation
-     subgraph), as with Pappas2017 and MST.
-  2. Cluster the *optional* nodes (i.e. excluding the anchor and the
-     recommendation terminals, which must be retained) by their
-     KG node type.  Node types in our graphs are the canonical
-     ``type`` attribute (``user``, ``item``, ``external``) plus any
-     finer-grained ``ext_type`` if available.  Cluster on the most
-     specific type attribute present.
-  3. From each cluster, pick the node with highest importance score
-     (e.g. degree centrality) -- a balance between coverage (one
-     representative per cluster) and salience (best representative).
-  4. Distribute the budget proportionally across clusters when the
-     budget is smaller than the number of clusters; spread evenly
-     (round-robin by importance) when the budget is larger.
-  5. Connect the chosen nodes via the same Steiner-tree machinery
-     used by ST and Pappas2017, so the output is a connected
-     subgraph rather than a disconnected fact list (which would not
-     compare directly to the other algorithms).
-
-Why this is a meaningful baseline
----------------------------------
-This isolates a different design choice: should the summary be driven
-by *importance* (Pappas, MST) or by *diversity* (FACES)?  By implementing
-both at the same matched budget, we expose the importance-vs-diversity
-trade-off directly.  WPCST sits on a third axis (path-frequency adapted
-prizes), so the three baselines now span a recognisable design space.
-"""
-
 from __future__ import annotations
 from collections import defaultdict
 from typing import Iterable
@@ -53,6 +6,39 @@ import networkx as nx
 from networkx.algorithms.approximation import steiner_tree
 
 from ._common import AnchorRequest, PerfTracker, package_result
+
+# ---------------------------------------------------------------------------
+# Clustering key (revision: tuning sweep).
+#   kg_type   : KG node ``type`` attribute (user / item / external).  Main tables.
+#   path_type : entity type carried by the explanation paths (step[1]),
+#               e.g. actor, category, genre.  A node that appears under
+#               several types gets its most frequent one.
+#   relation  : relation label carried by the explanation paths (step[0]),
+#               e.g. starred_by_actor, belong_to_category.  Most frequent one.
+# Selected through the FACES_CLUSTER_KEY environment variable so the runner
+# signatures stay unchanged.  Worker processes inherit the environment.
+# ---------------------------------------------------------------------------
+import os
+from collections import Counter
+
+CLUSTER_KEYS = ("kg_type", "path_type", "relation")
+
+
+def _cluster_key() -> str:
+    key = os.environ.get("FACES_CLUSTER_KEY", "kg_type")
+    if key not in CLUSTER_KEYS:
+        raise ValueError(f"FACES_CLUSTER_KEY must be one of {CLUSTER_KEYS}, got {key!r}")
+    return key
+
+
+def _path_labels(req: AnchorRequest, idx: int) -> dict[str, str]:
+    """Most frequent path label (idx=1 entity type, idx=0 relation) per node."""
+    counts: dict[str, Counter] = {}
+    for path in req.top_k_paths:
+        for step in path:
+            n = str(step[2])
+            counts.setdefault(n, Counter())[str(step[idx])] += 1
+    return {n: c.most_common(1)[0][0] for n, c in counts.items()}
 
 
 def _candidate_node_set(req: AnchorRequest) -> set[str]:
@@ -97,12 +83,21 @@ def run_faces_summary(G: nx.DiGraph, req: AnchorRequest, *, lam: float, K: int,
         Vc = _candidate_node_set(req)
         required = {str(req.anchor_id), *(str(t) for t in req.terminals)}
 
-        # 1. Cluster optional nodes by type
+        # 1. Cluster optional nodes by the selected key
+        key = _cluster_key()
+        labels: dict[str, str] = {}
+        if key == "path_type":
+            labels = _path_labels(req, 1)
+        elif key == "relation":
+            labels = _path_labels(req, 0)
         clusters: dict[str, list[str]] = defaultdict(list)
+        n_pool = 0
         for n in Vc:
             if n in required or n not in G:
                 continue
-            clusters[_node_type(G, n)].append(n)
+            n_pool += 1
+            lab = labels.get(n, _node_type(G, n)) if key != "kg_type" else _node_type(G, n)
+            clusters[lab].append(n)
 
         # 2. Within each cluster, sort by importance (descending)
         for t in clusters:
@@ -133,7 +128,9 @@ def run_faces_summary(G: nx.DiGraph, req: AnchorRequest, *, lam: float, K: int,
                 solution_nodes=list(terms), solution_edges=[],
                 sum_weight=0.0, perf=perf, top_k_paths=req.top_k_paths,
                 metadata={**req.metadata, "baseline": "faces",
-                          "budget": budget, "n_clusters": len(clusters)},
+                          "budget": budget, "n_clusters": len(clusters),
+                          "cluster_key": key, "n_pool_optional": n_pool,
+                          "n_admitted": len(chosen_optional)},
             )
 
         # 5. Connect via Steiner tree.  Same procedure as Pappas2017;
@@ -167,5 +164,6 @@ def run_faces_summary(G: nx.DiGraph, req: AnchorRequest, *, lam: float, K: int,
         solution_nodes=list(T.nodes()), solution_edges=edges_out,
         sum_weight=sum_weight, perf=perf, top_k_paths=req.top_k_paths,
         metadata={**req.metadata, "baseline": "faces", "budget": budget,
-                  "n_clusters": len(clusters)},
+                  "n_clusters": len(clusters), "cluster_key": key,
+                  "n_pool_optional": n_pool, "n_admitted": len(chosen_optional)},
     )

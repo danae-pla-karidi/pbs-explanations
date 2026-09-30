@@ -1,39 +1,3 @@
-"""
-MST-based summarization baseline (Troullinou et al. 2015).
-
-Reference:
-    G. Troullinou, H. Kondylakis, E. Daskalaki, D. Plexousakis,
-    "RDF digest: Efficient summarization of RDF/S KBs",
-    in ESWC 2015, Springer LNCS 9088, pp. 119-134.
-
-This is the algorithmic predecessor of Pappas et al. (ESWC 2017): both
-score nodes by importance and connect them, but they differ in *how* they
-connect.  Troullinou et al. compute a maximum-cost spanning tree (MST)
-on the whole graph once and then extract the paths from the MST that
-link the top-K most important nodes.  Pappas et al. argue this introduces
-many additional nodes since the MST commits to one path between any two
-nodes and that path may pass through irrelevant intermediate nodes.
-
-We include MST as a baseline both because it is a published, peer-reviewed
-graph summarization method and because the comparison Pappas-vs-MST is
-exactly the comparison Pappas et al. originally made; reproducing it on
-recommendation-explanation data extends their finding to a new domain.
-
-Adaptation to our query-driven setting
---------------------------------------
-Same as Pappas: candidates are restricted to the union of the top-K
-explanation paths (NaiveUnion node set).  The anchor and recommendation
-terminals are forced to be retained.  We pick the top-`budget` most
-important optional nodes by the supplied importance map, then extract
-the MST paths connecting all chosen nodes.
-
-Edge weight semantics
----------------------
-Troullinou et al. use a *maximum-cost* spanning tree (high-weight edges
-preferred).  We invert weights so a standard minimum-cost MST routine
-gives the maximum-cost solution, then read out the actual edges.
-"""
-
 from __future__ import annotations
 from typing import Iterable
 
@@ -84,7 +48,8 @@ def run_mst_summary(G: nx.DiGraph, req: AnchorRequest, *, lam: float, K: int,
         required = {str(req.anchor_id), *(str(t) for t in req.terminals)}
         optional = [n for n in Vc if n not in required and n in G]
         optional.sort(key=lambda n: -importance.get(n, 0.0))
-        chosen = required | set(optional[: max(0, budget)])
+        chosen_optional = set(optional[: max(0, budget)])
+        chosen = required | chosen_optional
 
         UG = G_und if G_und is not None else G.to_undirected(as_view=False)
         # Need a 'weight' attribute on UG for MST.  Inherit from G's
@@ -138,5 +103,7 @@ def run_mst_summary(G: nx.DiGraph, req: AnchorRequest, *, lam: float, K: int,
         solution_nodes=list(nodes_out), solution_edges=list(edges_out),
         sum_weight=sum_weight, perf=perf, top_k_paths=req.top_k_paths,
         metadata={**req.metadata, "baseline": "mst", "budget": budget,
-                  "n_terminals": len(chosen_in_tree)},
+                  "n_terminals": len(chosen_in_tree),
+                  "n_pool_optional": len(optional),
+                  "n_admitted": len(chosen_optional)},
     )

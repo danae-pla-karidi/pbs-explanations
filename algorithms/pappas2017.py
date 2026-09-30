@@ -1,56 +1,3 @@
-"""
-Pappas et al. (ESWC 2017) CentPrune baseline.
-
-Reference:
-    A. Pappas, G. Troullinou, G. Roussakis, H. Kondylakis, D. Plexousakis,
-    "Exploring importance measures for summarizing RDF/S KBs",
-    in The Semantic Web (ESWC 2017), Springer, pp. 387-403.
-
-The original method has two stages:
-  (1) score every node by an *adapted importance measure* (AIM); they
-      evaluate six measures and identify Betweenness as the winner.
-  (2) connect the top-K highest-scoring nodes via a graph Steiner tree
-      (they explore three approximations and recommend CHINS).
-
-Adaptation to our query-driven setting
---------------------------------------
-The original Pappas et al. method summarises an entire schema graph.  In our
-recommendation-explanation setting we summarise the explanation subgraph
-*induced by the top-K paths for an anchor*.  Without this restriction the
-method would degenerate to "summarise the whole KG", which is a different
-problem and would yield trivially poor anchor-relevance.
-
-Concretely:
-  - candidate node set V_c = the nodes appearing in the union of the top-K
-    explanation paths (i.e. the NaiveUnion node set).
-  - we score V_c by a chosen AIM (Betweenness by default, matching the
-    paper's recommendation).
-  - we pick the top-`budget` most important nodes; the anchor and the
-    K terminals are always retained regardless of score (these are the
-    must-have endpoints of the explanation).
-  - we run Steiner tree on the induced subgraph G[V_c] with the chosen
-    nodes as terminals, using NetworkX' MST-based approximation
-    (the SDISTG variant from the original paper, which is functionally
-    identical to networkx.algorithms.approximation.steiner_tree).
-
-The Steiner approximation is the same one our ST baseline uses; the
-*difference* is in which nodes become terminals.  ST takes anchor +
-recommended items as terminals; Pappas takes anchor + recommended items
-+ top-`budget` important nodes within the explanation subgraph.
-
-Why this is a meaningful baseline
----------------------------------
-This baseline isolates one specific design choice: should the summary
-include the most *structurally important* nodes within the explanation
-subgraph, or the most *centrally connecting* nodes (PCST/WPCST)?  It is
-a fair comparison because:
-  - it operates on the same anchor-and-paths input as our methods;
-  - it uses the size budget of WPCST for the same (dataset, scenario,
-    recommender) cell, making the comparison size-fair;
-  - it implements an externally-published, peer-reviewed graph
-    summarisation method without inventing a new straw man.
-"""
-
 from __future__ import annotations
 from typing import Iterable
 
@@ -116,7 +63,9 @@ def run_pappas2017(G: nx.DiGraph, req: AnchorRequest, *, lam: float, K: int,
                 solution_nodes=list(terms), solution_edges=[], sum_weight=0.0,
                 perf=perf, top_k_paths=req.top_k_paths,
                 metadata={**req.metadata, "baseline": "pappas2017",
-                          "budget": budget, "n_terminals": len(terms)},
+                          "budget": budget, "n_terminals": len(terms),
+                          "n_pool_optional": len(optional),
+                          "n_admitted": len(chosen_optional)},
             )
 
         # 5. Connect terms via Steiner tree on the *full graph* (the
@@ -161,5 +110,7 @@ def run_pappas2017(G: nx.DiGraph, req: AnchorRequest, *, lam: float, K: int,
         solution_nodes=list(T.nodes()), solution_edges=edges_out,
         sum_weight=sum_weight, perf=perf, top_k_paths=req.top_k_paths,
         metadata={**req.metadata, "baseline": "pappas2017",
-                  "budget": budget, "n_terminals": len(terms)},
+                  "budget": budget, "n_terminals": len(terms),
+                  "n_pool_optional": len(optional),
+                  "n_admitted": len(chosen_optional)},
     )
