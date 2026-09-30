@@ -1,12 +1,3 @@
-"""
-NaiveUnion baseline: the simplest possible "summary" - just the union of the
-top-K path nodes/edges, with no Steiner pruning, no PCST optimisation.
-
-This is the baseline the reviewer specifically asked for ("compare against the
-un-summarized explanation set"). It establishes a floor: any reasonable
-summarisation algorithm should produce smaller, more focused outputs than this.
-"""
-
 from __future__ import annotations
 
 import networkx as nx
