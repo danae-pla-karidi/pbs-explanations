@@ -1,42 +1,3 @@
-"""
-Weighted Prize-Collecting Steiner Tree (WPCST) — the TKDE contribution.
-
-Extends PCST with adaptive, centrality-weighted prizes:
-    p_v = alpha * c_v   if v is a terminal,
-          beta  * c_v   otherwise,
-where:
-    alpha = 1 + D_term / W_avg   (D_term = avg shortest path among terminals,
-                                   W_avg = avg edge weight)
-    beta  = gamma * alpha          (gamma in (0,1), default 0.1)
-    c_v   = centrality of v in [0,1]   (degree by default; PageRank or
-                                          betweenness for the alternative-
-                                          centrality study).
-
-Solver
-------
-Uses the same patched pcst_fast as PCST; only the prize vector differs.
-This preserves the Goemans-Williamson 2-approximation guarantee that
-PCST/WPCST originally rely on (the heuristic Steiner-then-prune we used
-during the period when pcst_fast was broken did not).
-
-D_term caching (multiprocessing-safe)
--------------------------------------
-The dominant per-anchor cost in WPCST is `_avg_terminal_distance`, which
-runs K(K-1)/2 weighted shortest-path queries on the (large) connected
-component containing the anchor.  D_term depends only on
-(anchor_id, ordered terminals, K, top_k_paths) and is therefore reusable
-across the three centrality variants (degree / pagerank /
-betweenness_approx) we run for the alt-centrality study.
-
-Caching is two-tier:
-  - In-process dict (fast, lives in each worker).
-  - On-disk pickles in `results/_dterm_cache/<dataset>_dterm[_pid<N>].pkl`.
-    To avoid races under multiprocessing, each worker writes its private
-    pickle keyed by PID; the runner merges them post-Pool.map via
-    `merge_dterm_caches`.  Subsequent runs (e.g. alt-centrality) load the
-    merged file at startup.
-"""
-
 from __future__ import annotations
 import itertools
 import hashlib
@@ -151,12 +112,14 @@ def _dterm_cache_key(dataset: str, anchor_id: str, terminals: list[str],
         h.update(b"#")
     paths_hash = h.hexdigest()
     terminals_sig = ",".join(map(str, terminals))
-    # lam is part of the key: D_term is defined under the adjusted weights
-    # w~(e), which depend on lam (Eq. 2).  Reusing a D_term across lambda
-    # values (e.g. in the lambda ablation) would contaminate the adaptive
-    # prize alpha.  Main-pipeline runs all use lam=1, so cache reuse across
-    # centrality variants is unaffected.
-    return f"{dataset}|{anchor_id}|K={K}|lam={lam:g}|t={terminals_sig}|p={paths_hash}"
+    # lam is part of the key: D_term is measured under the transformed
+    # costs (max_w - w~(e)), and w~(e) depends on lam (Eq. 2).  Reusing a
+    # D_term across lambda values (e.g. in the lambda ablation) would
+    # contaminate the adaptive prize alpha.  Main-pipeline runs all use
+    # lam=1, so cache reuse across centrality variants is unaffected.
+    # The dterm-v2-wprime prefix versions the definition (distances under
+    # transformed costs, anchors excluded); v1 values are never reused.
+    return f"dterm-v2-wprime|{dataset}|{anchor_id}|K={K}|lam={lam:g}|t={terminals_sig}|p={paths_hash}"
 
 
 # ---------------------------------------------------------------------------
@@ -164,19 +127,22 @@ def _dterm_cache_key(dataset: str, anchor_id: str, terminals: list[str],
 # ---------------------------------------------------------------------------
 
 def _avg_terminal_distance_uncached(G_und: nx.Graph, terminals: list[str]) -> float:
-    """Average pairwise shortest-path distance under `w_e`.
+    """Average pairwise shortest-path distance under the transformed
+    costs (`cost` = max_w - w_e), the currency the solver pays.
 
     Restricted to the connected component containing the first terminal;
-    pairs in different components are skipped.  Returns 0.0 if the
-    function cannot compute any distance — the caller is expected to
-    substitute the W_avg fallback per Algorithm 3 in algorithms.tex
-    (`if |T|=1 or some pair disconnected, set D_term = W_avg`).
+    pairs in different components are skipped.  Returns -1.0 (sentinel)
+    when no pairwise distance can be computed — the caller substitutes
+    the C_avg fallback per Algorithm 3 in algorithms.tex
+    (`if |T|=1 or no pair is connected, set D_term = C_avg`).  A
+    sentinel is required because a legitimate D_term of exactly 0.0 is
+    possible under the costs (a chain of maximum-relevance edges).
     """
     if len(terminals) < 2:
-        return 0.0
+        return -1.0
     root = terminals[0]
     if root not in G_und:
-        return 0.0
+        return -1.0
     cc = nx.node_connected_component(G_und, root)
     sub = G_und.subgraph(cc)
     total, n = 0.0, 0
@@ -184,11 +150,11 @@ def _avg_terminal_distance_uncached(G_und: nx.Graph, terminals: list[str]) -> fl
         if a not in sub or b not in sub:
             continue
         try:
-            total += nx.shortest_path_length(sub, a, b, weight="w_e")
+            total += nx.shortest_path_length(sub, a, b, weight="cost")
             n += 1
         except nx.NetworkXNoPath:
             pass
-    return total / n if n else 0.0
+    return total / n if n else -1.0
 
 
 def _avg_terminal_distance(G_und: nx.Graph, terminals: list[str], *,
@@ -212,22 +178,24 @@ def _avg_terminal_distance(G_und: nx.Graph, terminals: list[str], *,
 # ---------------------------------------------------------------------------
 
 def assign_prizes(G: nx.DiGraph, terminals: set[str], centrality: dict[str, float],
-                  *, gamma: float, w_avg: float, G_und: nx.Graph,
+                  *, gamma: float, c_avg: float, G_und: nx.Graph,
                   cache_key: Optional[str] = None
-                  ) -> tuple[float, float, float, bool]:
-    """Compute (alpha, beta, d_term, cache_hit) per Algorithm 3.
+                  ) -> tuple[float, float, float, bool, bool]:
+    """Compute (alpha, beta, d_term, cache_hit, fallback) per Algorithm 3.
 
-    If no terminal pair admits a finite shortest-path distance (singleton
-    terminal set, or disconnected components), we fall back to
-    `D_term <- W_avg`, matching the paper.
+    `terminals` is the distance set T (anchors excluded by the caller).
+    Distances are measured under the transformed costs.  If no terminal
+    pair admits a finite distance (singleton terminal set, or no pair
+    connected), we fall back to `D_term <- C_avg`, matching the paper,
+    which yields alpha = 2.
     """
     d_term, hit = _avg_terminal_distance(G_und, list(terminals), cache_key=cache_key)
-    if d_term <= 0.0:
-        # Fallback per paper: |T|=1 or all pairs disconnected -> use W_avg.
-        d_term = w_avg
-    alpha = 1.0 + (d_term / w_avg) if abs(w_avg) > 1e-9 else 1.0
+    fallback = d_term < 0.0
+    if fallback:
+        d_term = c_avg
+    alpha = 1.0 + (d_term / c_avg) if abs(c_avg) > 1e-9 else 2.0
     beta = gamma * alpha
-    return alpha, beta, d_term, hit
+    return alpha, beta, d_term, hit, fallback
 
 
 # ---------------------------------------------------------------------------
@@ -251,6 +219,12 @@ def run_wpcst(G: nx.DiGraph, req: AnchorRequest, *, lam: float, K: int,
                 metadata=req.metadata,
             )
         costify(G, max_w)
+        # Per-anchor costs onto the undirected distance graph.  G_und is a
+        # copy made at runner start; without this projection its edges
+        # carry no `cost` attribute and distances silently degrade to hop
+        # counts (NetworkX substitutes weight 1 for missing attributes).
+        _project_costs(G, G_und)
+        c_avg = max_w - w_avg
 
         terms = {req.anchor_id, *(t for t in req.terminals if t in G)}
         if len(terms) < 2:
@@ -261,18 +235,22 @@ def run_wpcst(G: nx.DiGraph, req: AnchorRequest, *, lam: float, K: int,
                 metadata=req.metadata,
             )
 
+        # Distance set per Algorithm 3: terminals only, anchors excluded,
+        # since the dispersion of the terminals drives the connection
+        # cost.  The anchor keeps its terminal prize via `terms` below.
+        dterm_terms = [str(t) for t in req.terminals if t in G]
+
         # Cache key: include dataset and the anchor's top-K paths so
         # alt-centrality re-runs hit the same value.
-        terms_ordered = [str(req.anchor_id)] + [str(t) for t in req.terminals if t in G]
         cache_key = (
-            _dterm_cache_key(dataset, str(req.anchor_id), terms_ordered, K, req.top_k_paths, lam)
+            _dterm_cache_key(dataset, str(req.anchor_id), dterm_terms, K, req.top_k_paths, lam)
             if dataset is not None
             else None
         )
 
-        alpha, beta, d_term, cache_hit = assign_prizes(
-            G, terms, centrality,
-            gamma=gamma, w_avg=w_avg, G_und=G_und,
+        alpha, beta, d_term, cache_hit, dterm_fallback = assign_prizes(
+            G, dterm_terms, centrality,
+            gamma=gamma, c_avg=c_avg, G_und=G_und,
             cache_key=cache_key,
         )
 
@@ -315,5 +293,6 @@ def run_wpcst(G: nx.DiGraph, req: AnchorRequest, *, lam: float, K: int,
         metadata={**req.metadata, "solver": "pcst_fast_gw",
                   "alpha": round(alpha, 4), "beta": round(beta, 4),
                   "d_term": round(d_term, 4),
-                  "dterm_cached": bool(cache_hit)},
+                  "dterm_cached": bool(cache_hit),
+                  "dterm_fallback": bool(dterm_fallback)},
     )
