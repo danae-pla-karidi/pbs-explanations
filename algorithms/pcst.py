@@ -1,22 +1,8 @@
 """
-Prize-Collecting Steiner Tree (PCST) summary explanation.
-
-Implements Algorithm 2 from `algorithms.tex`: PCST with static
-graph-level prizes
-    α = max{w(e) : e ∈ E},   β = min{w(e) : e ∈ E},
-    p(v) = α for v ∈ T*, p(v) = β otherwise,
-solved with the Goemans-Williamson primal-dual 2-approximation
-algorithm via the `pcst_fast` library.
-
-Solver
-------
 Uses pcst_fast (Hegde, Indyk, Schmidt; NeurIPS'14).  The 1.0.10
 release on PyPI has a Python-binding bug that corrupts result arrays;
 we ship a one-line patch in `scripts/install_pcst_fast.sh` and validate
 the install via `pcst_fast_compat.py`.
-
-WPCST (next module) extends PCST with adaptive, centrality-weighted
-prizes; the solver is identical.
 """
 
 from __future__ import annotations
