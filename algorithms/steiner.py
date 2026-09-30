@@ -1,14 +1,3 @@
-"""
-Steiner-tree summary explanation (the ICDE algorithm).
-
-Refactored from `lastfm_dumps/experiment_user_centric.py` and the equivalent
-ML1M code, to the unified pipeline in this repo.
-
-Key change vs. the original: the per-anchor reweighting is delegated to
-`_common.apply_reweighting` so ST, PCST, and WPCST share a single source of
-truth for the edge-weight update step.
-"""
-
 from __future__ import annotations
 from typing import Sequence
 
