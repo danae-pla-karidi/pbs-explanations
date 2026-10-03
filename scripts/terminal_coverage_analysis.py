@@ -1,27 +1,3 @@
-"""
-Statistics behind the interpretation of terminal coverage.
-
-Run after scripts/terminal_coverage.py, from the repository root:
-
-    python -m scripts.terminal_coverage_analysis
-
-It prints three blocks.
-
-A. WPCST(degree): degree centrality of the terminals.
-   A1  mean centrality of all terminals per scenario
-   A2  mean centrality of retained vs omitted terminals per scenario
-
-B. Path overlap per recommender (user-centric).
-   f_max = largest number of the K explanation paths that traverse one edge.
-
-C. PCST (user-centric): omissions against the shift constant M.
-   M = max adjusted weight for the anchor, reported as M / w_max, where w_max
-   is the maximum base weight. M / w_max = 2 means that an edge of maximum
-   base weight is traversed by all K paths (lambda = 1).
-
-Block C loads the knowledge graphs (about 20 seconds each).
-"""
-
 from __future__ import annotations
 import json
 import pickle
