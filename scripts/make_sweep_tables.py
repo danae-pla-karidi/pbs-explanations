@@ -1,23 +1,3 @@
-"""
-Build the two revision tables from the sweep outputs.
-
-  Table A (budget sensitivity): per baseline and rho in {0.5, 1, 2}, per
-      scenario: C, R, Rbar, mean |V_S|, and the saturation rate, i.e. the
-      fraction of anchors whose candidate pool (optional path nodes) is not
-      larger than the budget, so that the budget admits the whole pool.
-  Table B (tuning): per baseline configuration at rho = 1, per scenario:
-      C, R, Rbar (and mean cluster count for FACES).
-
-The rho = 1 rows and the main-table configuration come from the main
-per-anchor files (results/per_anchor/), so they equal the main tables.
-Aggregation follows the main tables: mean over anchors per cell, then mean
-over recommenders per scenario; Rbar = R / (1/C - 1) on the scenario means.
-
-Usage:
-    python -m scripts.make_sweep_tables --dataset ml1m
-    python -m scripts.make_sweep_tables --dataset lfm1m
-"""
-
 from __future__ import annotations
 import argparse
 import json
