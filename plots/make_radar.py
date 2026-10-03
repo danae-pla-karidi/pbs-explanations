@@ -1,23 +1,3 @@
-"""
-Radar plots for the recency (beta1/beta2) ablation, in the style of the
-dynamic-steiner radar: the spokes are the (beta1, beta2) combinations and each
-series is a metric, drawn as one polygon, min-max normalized to its own range
-(shown in the legend, e.g. "Comprehensibility (WPCST) [0.005 - 0.047]").
-
-One figure per (recommender, scenario).  By default each figure is a single
-radar overlaying comprehensibility and relevance for ST, PCST, and WPCST
-(color = algorithm, solid = comprehensibility, dashed = relevance).
-
-The s=0 spoke (beta1=1, beta2=0) is read from summary.csv (the committed-graph
-results) and injected, so the ablation run itself only needs to compute the
-s>0 shares.
-
-Usage
------
-    python -m plots.make_radar --dataset ml1m
-    python -m plots.make_radar --dataset ml1m --algorithms wpcst   # single alg
-    python -m plots.make_radar --dataset ml1m --metrics comprehensibility
-"""
 from __future__ import annotations
 
 import argparse
