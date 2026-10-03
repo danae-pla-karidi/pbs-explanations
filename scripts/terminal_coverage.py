@@ -1,26 +1,3 @@
-"""
-Terminal coverage (TC) of the stored summaries.
-
-    TC(S) = |V_S ∩ T| / |T|
-
-T is the terminal set of the anchor request, rebuilt exactly as the four
-scenario runners build it (same samples, same recommendation files, same K).
-V_S is `solution_nodes` of the stored result record.
-
-No algorithm is rerun and no graph is loaded. The script only reads
-  samples/*.csv, data/<dataset>/*.jsonl, results/<dataset>/<scenario>/*.jsonl
-
-Usage (from the repository root, the folder that contains config/):
-
-    python -m scripts.terminal_coverage
-
-Outputs
-    results/terminal_coverage_per_anchor.csv   one row per summary
-    results/terminal_coverage.csv              one row per (dataset, scenario, recommender, algorithm)
-    results/terminal_coverage_table.csv        mean over recommenders, the paper table
-and prints the paper table.
-"""
-
 from __future__ import annotations
 import json
 from collections import Counter
