@@ -20,6 +20,13 @@ This is a **code-only** repository. Input data is not redistributed — see [DAT
 - **Two new metrics** — faithfulness and evidence density (relevance per retained edge), plus two fairness diagnostics: the Comprehensibility Gap (CG) and the Popular-Item Gap (PIG), reported with the amplification ratio of PIG against the recommender gap (metrics/).
 - **Paired significance testing** — Wilcoxon signed-rank with Holm correction
   (`metrics/significance.py`).
+- **Statistical support for the fairness diagnostics** — bootstrap confidence
+  intervals and permutation tests with Holm correction, on gender, age, and
+  item-popularity splits (`scripts/fairness_statistics.py`).
+- **Terminal coverage** — the fraction of terminals each summary retains
+  (`scripts/terminal_coverage.py`, `scripts/terminal_coverage_analysis.py`).
+- **KG structure analysis** — degree per node type and centrality structure
+  of both graphs (`scripts/kg_structure.py`).
 - **Second dataset** — LastFM-1M, user-centric and user-group scenarios with PGPR and CAFE (see below).
 - **Two added recommenders** — PLM and PLMR, alongside PGPR and CAFE.
 - **Ablation runners** - the path-aware parameter lambda (runners/run_lambda_ablation.py) and the recency weighting over (beta1, beta2) settings (runners/generate_ablation_kgs.py, runners/run_beta_ablation.py). The WPCST centrality variants (degree, PageRank, approximate betweenness) run as a phase of the main sweeps.
@@ -44,11 +51,13 @@ skipped on LFM1M (~1 CPU-day per pass at the ML1M sampling rate). The baselines 
 ├── sampling/      # seeded user/item sampling
 ├── algorithms/    # ST, PCST, WPCST + NaiveUnion, CentPrune (pappas2017.py), MST, FACES, SuperNode
 ├── centralities/  # degree, PageRank, approximate betweenness
-├── runners/       # one runner per scenario, plus the λ-ablation runner
+├── runners/       # one runner per scenario, plus the λ and recency ablation runners
 ├── metrics/       # per-anchor metrics, aggregation, paired Wilcoxon significance
 ├── plots/         # comprehensibility–relevance trade-off figure
 ├── scripts/       # orchestration (run_all_*.sh, budgets, external-baseline phase,
-│                  #   patched pcst_fast installer, LFM1M table helper)
+│                  #   patched pcst_fast installer, LFM1M table helper),
+│                  #   baseline sweeps, and analysis scripts (fairness statistics,
+│                  #   terminal coverage, D_term fallback, KG structure)
 ├── tests/         # self-contained smoke tests (no real data required)
 └── samples/       # seeded anchor IDs (committed for reference)
 ```
@@ -106,14 +115,50 @@ its number, e.g. `bash scripts/run_all_ml1m.sh 4` to restart at the external
 baselines. The set of recommenders and scenarios swept is configured at the top
 of each `run_all_*.sh` and in `config/settings.py`.
 
-### λ-ablation
+### Analysis scripts
+
+These read the stored outputs under `results/`. Only `run_baseline_sweeps`
+runs algorithms.
 
 ```bash
-python -m runners.run_lambda_ablation --dataset ml1m --baseline pgpr \
-    --scenario user_centric --algorithm wpcst --centrality degree
+# Fairness statistics for CG and PIG (bootstrap CIs, permutation tests, Holm)
+python -m scripts.fairness_statistics
+
+# Terminal coverage, then the statistics behind its interpretation
+python -m scripts.terminal_coverage
+python -m scripts.terminal_coverage_analysis
+
+# Frequency of the D_term fallback of WPCST
+python -m scripts.fallback_table --centrality degree
+
+# KG structure (needs the cached centralities)
+python -m scripts.kg_structure --dataset ml1m
+python -m scripts.kg_structure --dataset lfm1m
+
+# Budget and configuration sweeps of the structural baselines
+python -m scripts.run_baseline_sweeps --dataset ml1m --sweep budget
+python -m scripts.run_baseline_sweeps --dataset ml1m --sweep tuning
+python -m scripts.sweep_metrics --dataset ml1m
 ```
 
-Sweeps the path-aware reweighting strength lambda of Eq. (2) over {0.01, 1, 100} for ST and WPCST(degree), on the user-centric scenario, scoring outputs with the same metric functions as the main pipeline. The main runs fix lambda = 1.
+### λ-ablation
+
+```python -m runners.run_lambda_ablation --dataset ml1m \
+    --lambdas 0.01,0.1,0.3,0.5,1,2,3,5,10,100 \
+    --algorithms st,wpcst --baselines pgpr,cafe \
+    --scenarios user_centric --centrality degree
+```
+
+Sweeps the path-aware reweighting strength lambda of Eq. (2) over {0.01, 0.1, 0.3, 0.5, 1, 2, 3, 5, 10, 100} (the grid of the paper, passed with `--lambdas`; the runner default is {0.01, 1, 100}) for ST and WPCST(degree), on the user-centric scenario, scoring outputs with the same metric functions as the main pipeline. The main runs fix lambda = 1.
+
+```python -m runners.run_lambda_ablation --dataset lfm1m \
+    --lambdas 0.01,0.1,0.3,0.5,1,2,3,5,10,100 \
+    --algorithms st,wpcst --baselines pgpr,cafe \
+    --scenarios user_centric --centrality degree
+```
+
+Sweeps the path-aware reweighting strength lambda of Eq. (2) over {0.01, 0.1, 0.3, 0.5, 1, 2, 3, 5, 10, 100} (the grid of the paper, passed with `--lambdas`; the runner default is {0.01, 1, 100}) for ST and WPCST(degree), on the user-centric scenario, scoring outputs with the same metric functions as the main pipeline. The main runs fix lambda = 1.
+
 
 ## Outputs
 
@@ -125,6 +170,9 @@ results/per_anchor/<...>.parquet          # per-anchor metrics (needed for Wilco
 results/<dataset>/summary.csv             # per-cell aggregation
 results/<dataset>/significance*.csv|.tex  # paired Wilcoxon (Holm)
 results/<dataset>/figures/                # CR-tradeoff PDFs
+results/fairness_stats_cg.csv, fairness_stats_pig.csv   # fairness statistics
+results/terminal_coverage*.csv                          # terminal coverage
+results/sweeps/                                         # baseline budget and configuration sweeps
 ```
 
 ## Hyperparameters
