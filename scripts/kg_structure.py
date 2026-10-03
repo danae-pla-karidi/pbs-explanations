@@ -1,19 +1,3 @@
-"""
-KG structure statistics per node type and centrality (revision, R1 point 3).
-
-For each dataset and each cached centrality (degree, PageRank, approximate
-betweenness), reports: the node type of the maximum (the node that
-normalizes all scores to 1), the type composition of the 100 top-ranked
-nodes, and the median normalized score c(v) of user and item nodes, i.e.
-the prize scale WPCST assigns to each type (Eq. 4).  Also reports degree
-quantiles per type.  Needs only the graph and the centrality cache, no
-summarization run.
-
-Usage:
-    python -m scripts.kg_structure --dataset ml1m
-    python -m scripts.kg_structure --dataset lfm1m
-"""
-
 from __future__ import annotations
 import argparse
 import collections
