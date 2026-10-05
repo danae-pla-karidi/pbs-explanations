@@ -30,6 +30,7 @@ This is a **code-only** repository. Input data is not redistributed — see [DAT
 - **Second dataset** — LastFM-1M, user-centric and user-group scenarios with PGPR and CAFE (see below).
 - **Two added recommenders** — PLM and PLMR, alongside PGPR and CAFE.
 - **Ablation runners** - the path-aware parameter lambda (runners/run_lambda_ablation.py) and the recency weighting over (beta1, beta2) settings (runners/generate_ablation_kgs.py, runners/run_beta_ablation.py). The WPCST centrality variants (degree, PageRank, approximate betweenness) run as a phase of the main sweeps.
+- **User study** - scripts that select and draw the trees of the user study on ML1M and that test the collected answers (`scripts/user_study_stimuli.py`, `scripts/user_study_analysis.py`).
 
 ## Algorithms and recommenders
 
@@ -57,13 +58,14 @@ skipped on LFM1M (~1 CPU-day per pass at the ML1M sampling rate). The baselines 
 ├── scripts/       # orchestration (run_all_*.sh, budgets, external-baseline phase,
 │                  #   patched pcst_fast installer, LFM1M table helper),
 │                  #   baseline sweeps, and analysis scripts (fairness statistics,
-│                  #   terminal coverage, D_term fallback, KG structure)
+│                  #   terminal coverage, D_term fallback, KG structure, user study)
 ├── tests/         # self-contained smoke tests (no real data required)
 └── samples/       # seeded anchor IDs (committed for reference)
 ```
 
-`data/`, `results/`, and `logs/` are git-ignored. `data/` is populated per
-[DATA.md](DATA.md); `results/` and `logs/` are produced by the run scripts.
+`data/`, `results/`, `logs/`, and `user_study/` are git-ignored. `data/` is populated per
+[DATA.md](DATA.md); `results/` and `logs/` are produced by the run scripts;
+`user_study/` is written by the user study scripts.
 
 ## Quickstart
 
@@ -139,6 +141,13 @@ python -m scripts.kg_structure --dataset lfm1m
 python -m scripts.run_baseline_sweeps --dataset ml1m --sweep budget
 python -m scripts.run_baseline_sweeps --dataset ml1m --sweep tuning
 python -m scripts.sweep_metrics --dataset ml1m
+
+# User study: select nine ML1M users and draw their ST, PCST, and WPCST(degree)
+# summaries (needs the Graphviz `dot` binary and the stored ML1M outputs)
+python -m scripts.user_study_stimuli
+
+# User study: tests on the collected answers (CSV with one row per participant)
+python -m scripts.user_study_analysis --responses user_study/responses.csv
 ```
 
 ### λ-ablation
@@ -173,6 +182,7 @@ results/<dataset>/figures/                # CR-tradeoff PDFs
 results/fairness_stats_cg.csv, fairness_stats_pig.csv   # fairness statistics
 results/terminal_coverage*.csv                          # terminal coverage
 results/sweeps/                                         # baseline budget and configuration sweeps
+user_study/                                             # diagrams and analysis tables of the user study (git-ignored)
 ```
 
 ## Hyperparameters
