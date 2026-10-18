@@ -1,1 +1,9 @@
 
+ Statistics behind Section 5.3 of the paper, as produced by `python -m scripts.fairness_statistics` on the reported runs.
+
+   fairness_stats_cg.csv   one row per (dataset, scenario, split, recommender, algorithm):
+                           group sizes, signed difference, 95% bootstrap CI, permutation p,
+                           Holm-adjusted p, Cohen's d, detectable difference (mde).
+   fairness_stats_pig.csv  same keys: recommender gap and summary gap with CIs,
+                           amplification ratio with CI, change of the gap with CI,
+                           permutation p and Holm-adjusted p.
