@@ -5,11 +5,11 @@ Materials and results of the user study of Section 5.2 (ML1M, user-centric scena
 ## Cases
 
 `scripts/user_study_stimuli.py` drew nine users at random, three from each of three
-size strata of the WPCST(degree) summary (1 to 20, 21 to 35, and 36 to 50 edges), and
-drew their ST, PCST, and WPCST(degree) summaries as tree diagrams. The study uses six
-of them, two per stratum, drawn with `random.Random(42).sample` within each stratum:
-U1 and U5 (36 to 50 edges), U3 and U4 (21 to 35), U6 and U9 (1 to 20). They are shown
-in the order U1, U3, U4, U5, U6, U9 as "User 1 of 6" to "User 6 of 6".
+size strata of the WPCST(degree) summary, and drew their ST, PCST, and WPCST(degree)
+summaries as tree diagrams. The study uses six of them, two per stratum, drawn with 
+`random.Random(42).sample` within each stratum: U1 and U5 (36 to 50 edges), U3 and U4
+(21 to 35), U6 and U9 (1 to 20). They are shown in the order U1, U3, U4, U5, U6, U9 
+as "User 1 of 6" to "User 6 of 6".
 
 | File | Content |
 |---|---|
