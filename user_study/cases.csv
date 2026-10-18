@@ -1,0 +1,7 @@
+case,recommender,user_id,stratum,recommended_movies
+U1,plmr,u4770,36-50,Gandhi | Eyes Wide Shut | Paulie | Rushmore | My Fair Lady | The Full Monty | Blade Runner | Unforgiven | Lone Star | Entrapment
+U3,plmr,u4043,21-35,Quiz Show | Flight of the Navigator | Wizard of Oz | Pleasantville | Mars Attacks! | Beauty and the Beast | Hamlet | Starman | Rain Man | Erin Brockovich
+U4,pgpr,u2473,21-35,Back to the Future | Butch Cassidy and the Sundance Kid | Godfather | Indiana Jones and the Last Crusade | Jaws | Being John Malkovich | Return of the Jedi | Raiders of the Lost Ark | Star Wars | Saving Private Ryan
+U5,cafe,u2494,36-50,Saving Private Ryan | The Big Lebowski | Sliding Doors | Jurassic Park | The Sixth Sense | Toy Story 2 | Back to the Future | The Governess | Return of the Jedi | The Silence of the Lambs
+U6,plmr,u3501,1-20,Babe: Pig in the City | Total Recall | Saving Private Ryan | The Chamber | Passion Fish | In the Line of Fire | Groundhog Day | The General's Daughter | The Remains of the Day | I Dreamed of Africa
+U9,cafe,u1185,1-20,Raiders of the Lost Ark | Lethal Weapon | Indiana Jones and the Last Crusade | Butch Cassidy and the Sundance Kid | Aliens | Star Wars | The Princess Bride | Romancing the Stone | Saving Private Ryan | Return of the Jedi
