@@ -42,4 +42,4 @@ python -m scripts.user_study_analysis --responses reported/user_study/responses.
 | `analysis_per_summary.csv` | mean ratings per summary next to its C, R, and size |
 | `analysis_by_stratum.csv` | mean ratings and choice shares per size stratum |
 
-The answers of the participants are available from the authors on request.
+The answers of the participants are available in `responses.csv`.
