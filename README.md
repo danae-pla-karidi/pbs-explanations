@@ -61,6 +61,7 @@ skipped on LFM1M (~1 CPU-day per pass at the ML1M sampling rate). The baselines 
 │                  #   terminal coverage, D_term fallback, KG structure, user study)
 ├── tests/         # self-contained smoke tests (no real data required)
 └── samples/       # seeded anchor IDs (committed for reference)
+
 ```
 
 `data/`, `results/`, `logs/`, and `user_study/` are git-ignored. `data/` is populated per
