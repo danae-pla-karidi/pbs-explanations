@@ -14,8 +14,8 @@ as "User 1 of 6" to "User 6 of 6".
 | File | Content |
 |---|---|
 | `cases.csv` | the six users: recommender, user id, stratum, recommended movies |
-| `stimuli_key.csv` | per case and label (A, B, C): algorithm, size, C, R, terminal coverage. Not shown to participants. |
-| `stimuli/` | the 18 diagrams, `<case>_<label>.png` |
+| `example_users.csv` | per case and label (A, B, C): algorithm, size, C, R, terminal coverage. Not shown to participants. |
+| `example_user_trees/` | the 18 diagrams, `<case>_<label>.png` |
 | `questionnaire.md` | the questionnaire as shown to participants |
 
 ## Procedure
