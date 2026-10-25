@@ -26,20 +26,4 @@ and for the amount of evidence it provides, and chose one diagram for quick unde
 and one for detailed analysis. Role and familiarity with recommender systems were asked
 once. No personal data was collected.
 
-## Analysis
-
-```
-python -m scripts.user_study_analysis --responses user_study/responses.csv \
-    --key user_study/stimuli_key.csv --out user_study
-```
-
-| File | Content |
-|---|---|
-| `analysis_ratings.csv` | mean, SD, and median of the participant means per algorithm and measure |
-| `analysis_tests.csv` | paired Wilcoxon signed-rank tests on participant means, Holm-adjusted |
-| `analysis_choices.csv` | choice shares per question and algorithm with bootstrap CIs |
-| `analysis_proxies.csv` | Spearman correlation of C with the ease ratings and of R with the evidence ratings over the 18 summaries |
-| `analysis_per_summary.csv` | mean ratings per summary next to its C, R, and size |
-| `analysis_by_stratum.csv` | mean ratings and choice shares per size stratum |
-
 The answers of the participants are available in `responses.csv`.
