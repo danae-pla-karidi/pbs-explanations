@@ -1,7 +1,6 @@
 # Summary Explanations for Graph-Based Recommenders
 
-Experimental pipeline for the **ACM Transactions on Recommender Systems** of our ICDE 2025
-paper *"Path-Based Summary Explanations for Graph Recommenders"* [1].
+Experimental pipeline of Summary Explanations for Graph-Based Recommenders, the extended version of our ICDE 2025 paper Path-Based Summary Explanations for Graph Recommenders [1], under submission to ACM Transactions on Recommender Systems.
 
 The pipeline aggregates per-recommendation explanation paths into a single
 compact subgraph, formalized as a unified **anchor–terminal** bi-objective
