@@ -64,7 +64,7 @@ skipped on LFM1M (~1 CPU-day per pass at the ML1M sampling rate). The baselines 
 
 ```
 
-`data/`, `results/`, `logs/`, and `user_study/` are git-ignored. `data/` is populated per
+`data/`, `results/`, and `logs/` are git-ignored. `data/` is populated per
 [DATA.md](DATA.md); `results/` and `logs/` are produced by the run scripts;
 `user_study/` is written by the user study scripts.
 
@@ -183,7 +183,7 @@ results/<dataset>/figures/                # CR-tradeoff PDFs
 results/fairness_stats_cg.csv, fairness_stats_pig.csv   # fairness statistics
 results/terminal_coverage*.csv                          # terminal coverage
 results/sweeps/                                         # baseline budget and configuration sweeps
-user_study/                                             # diagrams and analysis tables of the user study (git-ignored)
+user_study/                                             # cases, stimuli, key, responses, and analysis tables of the user study
 ```
 
 ## Hyperparameters
