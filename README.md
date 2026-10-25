@@ -183,7 +183,7 @@ results/<dataset>/figures/                # CR-tradeoff PDFs
 results/fairness_stats_cg.csv, fairness_stats_pig.csv   # fairness statistics
 results/terminal_coverage*.csv                          # terminal coverage
 results/sweeps/                                         # baseline budget and configuration sweeps
-user_study/                                             # cases, stimuli, key, responses, and analysis tables of the user study
+user_study/                                             # cases, stimuli, key, and responses of the user study
 ```
 
 ## Hyperparameters
