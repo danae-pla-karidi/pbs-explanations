@@ -29,8 +29,8 @@ once. No personal data was collected.
 ## Analysis
 
 ```
-python -m scripts.user_study_analysis --responses reported/user_study/responses.csv \
-    --key reported/user_study/stimuli_key.csv --out reported/user_study
+python -m scripts.user_study_analysis --responses user_study/responses.csv \
+    --key user_study/stimuli_key.csv --out user_study
 ```
 
 | File | Content |
