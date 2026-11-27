@@ -7,7 +7,7 @@ compact subgraph, formalized as a unified **anchor–terminal** bi-objective
 problem (comprehensibility vs. relevance) over four scenarios: user-centric,
 item-centric, user-group, item-group.
 
-This is a **code-only** repository. Input data is not redistributed — see [DATA.md](DATA.md).
+This repository holds the code, the fairness statistics, and the user study materials. Input data is not redistributed — see [DATA.md](DATA.md).
 
 ## What's new relative to the ICDE 2025 version [1]
 
